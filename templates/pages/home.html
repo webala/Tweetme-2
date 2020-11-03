@@ -19,11 +19,26 @@
 </div>
 
 <div class="row" id="tweets">
-       Replace me
-    
+       Replace me   
 </div>
 
 <script>
+    function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 
     const handleTweetCreateFormError = (msg, display) => {
 
@@ -37,6 +52,8 @@
         }
 
     }
+
+
 
 
     function handleTweetCreateFormDidSubmit(event) {
@@ -78,9 +95,17 @@
                     alert("An error occured. Please try again")
                 }
                 console.log(contentErrorMsg)
-            } else if (xhr.status === 500){
-                alert("There was a server error, please try again later.")
+            } else if (xhr.status === 403){
+                alert("You must login")
+                window.location.href = '/login'
+            }else if (xhr.status === 500){
+                alert("There was a server error. Please try again later")
+                
+            }else if (xhr.status === 401){
+                alert("You must login")
+                window.location.href = '/login'
             }
+        
         }
         xhr.onerror = () => {
             alert("An error occured. Please try again.")
@@ -90,27 +115,47 @@
 
     const tweetContainerElement = document.getElementById("tweets")
     const tweetCreateFormEl = document.getElementById("tweet-create-form")
-
     tweetCreateFormEl.addEventListener("submit", handleTweetCreateFormDidSubmit)
 
-    const handleDidLike = (tweet_id, currentCount) => {
+
+
+
+    
+    const handleTweetAction = (tweet_id, currentCount, action) => {
         console.log(tweet_id, currentCount)
+        const url = 'api/tweet/action'
+        const method = 'POST'
+        const responseType = 'json'
+        const csrftoken = getCookie('csrftoken')
+        const xhr = new XMLHttpRequest()
+        xhr.open(method, url)
+        xhr.responseType = responseType
+        xhr.setRequestHeader("Content-Type", "application/json")
+        xhr.setRequestHeader("HTTP_X_REQUESTED_WITH", "XMLHttpRequest")
+        xhr.setRequestHeader("X-Requested-With","XMLHttpRequest") 
+        xhr.setRequestHeader("X-CSRFToken", csrftoken)
+        data = JSON.stringify({
+            id: tweet_id,
+            action: action
+        })
+        xhr.onload = () => {
+            loadTweets(tweetContainerElement)
+        }
+        xhr.send(data)
     }
 
-    const loadTweets = (tweetElement) => {
-       
+
+
+    const loadTweets = (tweetElement) => {   
     const xhr = new XMLHttpRequest()
     const method = 'GET'
     const url = "/tweets"
-    const responseType = "json" 
-
+    const responseType = "json"
     xhr.responseType = responseType
     xhr.open(method, url)
-    xhr.onload = function() {
-        
-    const server_response = xhr.response
-    const listedItems = server_response.response
-        
+    xhr.onload = function() {   
+   // const server_response = xhr.response
+    const listedItems = xhr.response 
     var finalTweetStr = ""
     for(let i=0;i<listedItems.length;i++){
         let currentItem = formatTweetElement(listedItems[i])
@@ -119,15 +164,31 @@
 
     console.log(listedItems)
     tweetElement.innerHTML = finalTweetStr
-
     }
     xhr.send()
     }
 
+
+
     loadTweets(tweetContainerElement)
 
+
+
     function LikeBtn(tweet){
-        return "<button class='btn btn-primary btn-sm' onClick=handleDidLike(" + tweet.id + "," + tweet.likes + ")>"+ tweet.likes + "Likes </button>"
+        return "<button class='btn btn-primary btn-sm' onClick=handleTweetAction(" 
+        + tweet.id + "," + tweet.likes + ",'like')>"+ tweet.likes + "Likes </button>"
+    }
+
+
+    function UnLikeBtn(tweet){
+        return "<button class='btn btn-outline-primary btn-sm' onClick=handleTweetAction(" 
+        + tweet.id + "," + tweet.likes + ",'unlike')>Unlike </button>"
+    }
+
+
+    function RetweetBtn(tweet){
+        return "<button class='btn btn-outline-success btn-sm' onClick=handleTweetAction(" 
+        + tweet.id + "," + tweet.likes + ",'retweet')>Retweet </button>"
     }
 
     const formatTweetElement = tweet =>
@@ -136,6 +197,8 @@
          + "'><p>" + tweet.content + 
          "</p><div class='btn-group'>" +
          LikeBtn(tweet) +
+         UnLikeBtn(tweet) +
+         RetweetBtn(tweet) +
          "</div></div>"
         return formattedTweet
     }
