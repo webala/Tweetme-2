@@ -15,7 +15,10 @@ from .serializers import (
     TweetSerializer, 
     TweetActionSerializer,
     TweetCreateSerializer
+    
     )
+
+
 
 
 
@@ -79,7 +82,11 @@ def tweet_action_view(request, *args, **kwargs):
         data = serializer.validated_data
         tweet_id = data.get('id')
         action = data.get('action')
+<<<<<<< HEAD
         content = data.get('content')
+=======
+        content = data.get('comment')
+>>>>>>> 1cc303cefbe30c962eb90eb451c02be10fcda228
 
         qs = Tweet.objects.filter(id=tweet_id)
         if not qs.exists():
@@ -96,11 +103,15 @@ def tweet_action_view(request, *args, **kwargs):
             return Response(serializer.data, status=200)
         elif action == 'retweet':
             parent = obj
+<<<<<<< HEAD
             new_tweet = Tweet.objects.create(
                 user=request.user, 
                 parent=parent,
                 content=content
                 )
+=======
+            new_tweet = Tweet.objects.create(user=request.user, parent=parent, content=content)
+>>>>>>> 1cc303cefbe30c962eb90eb451c02be10fcda228
             serializer = TweetSerializer(new_tweet)
             return Response(serializer.data, status=200)
     return Response({}, status=200)
