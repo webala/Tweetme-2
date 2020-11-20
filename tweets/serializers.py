@@ -26,7 +26,7 @@ class TweetCreateSerializer(serializers.ModelSerializer):
 
 class TweetSerializer(serializers.ModelSerializer):
     likes = serializers.SerializerMethodField(read_only=True)
-    #content = serializers.SerializerMethodField(read_only=True)
+    content = serializers.SerializerMethodField(read_only=True)
     parent = TweetCreateSerializer(read_only=True) 
 
     class Meta:
@@ -55,7 +55,7 @@ class TweetSerializer(serializers.ModelSerializer):
 class TweetActionSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     action = serializers.CharField()
-    comment = serializers.CharField(allow_blank=True, required=False)
+    content = serializers.CharField(allow_blank=True, required=False)
 
     def validate_action(self, value):
         value = value.lower().strip()
